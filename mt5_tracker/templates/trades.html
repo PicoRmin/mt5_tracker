@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}معاملات{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">معاملات</h2>
+        
+        <div class="flex items-center space-x-4">
+            <div class="relative">
+                <select id="accountFilter" onchange="filterTrades()" class="appearance-none bg-white border border-gray-300 rounded px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">همه حساب‌ها</option>
+                    {% for account in accounts %}
+                    <option value="{{ account.id }}" {% if selected_account == account.id %}selected{% endif %}>{{ account.account_id }} ({{ account.broker }})</option>
+                    {% endfor %}
+                </select>
+                <div class="absolute left-3 top-3 pointer-events-none">
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </div>
+            </div>
+            
+            <div class="relative">
+                <select id="typeFilter" onchange="filterTrades()" class="appearance-none bg-white border border-gray-300 rounded px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">همه نوع‌ها</option>
+                    <option value="BUY" {% if request.GET.type == 'BUY' %}selected{% endif %}>خرید</option>
+                    <option value="SELL" {% if request.GET.type == 'SELL' %}selected{% endif %}>فروش</option>
+                </select>
+                <div class="absolute left-3 top-3 pointer-events-none">
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شناسه معامله</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">حساب</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نماد</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نوع</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">حجم</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">سود</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ بسته شدن</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">جزئیات</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for trade in trades %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ trade.ticket_id }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.account.account_id }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.symbol }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if trade.type == 'BUY' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ trade.get_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.volume|floatformat:2 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium {% if trade.profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {{ trade.profit|floatformat:2|intcomma }} $
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.exit_time|date:"Y/m/d H:i" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="showTradeDetails({{ trade.id }})" class="text-blue-600 hover:text-blue-900">مشاهده</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">هیچ معامله‌ای یافت نشد</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if trades.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <nav class="inline-flex rounded-md shadow">
+            {% if trades.has_previous %}
+            <a href="?page={{ trades.previous_page_number }}{% if selected_account %}&account={{ selected_account }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                قبلی
+            </a>
+            {% endif %}
+            
+            {% for i in trades.paginator.page_range %}
+            {% if trades.number == i %}
+            <span class="px-3 py-2 border-t border-b border-gray-300 bg-blue-500 text-white text-sm font-medium">
+                {{ i }}
+            </span>
+            {% else %}
+            <a href="?page={{ i }}{% if selected_account %}&account={{ selected_account }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="px-3 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {{ i }}
+            </a>
+            {% endif %}
+            {% endfor %}
+            
+            {% if trades.has_next %}
+            <a href="?page={{ trades.next_page_number }}{% if selected_account %}&account={{ selected_account }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                بعدی
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Trade Details Modal -->
+<div id="tradeDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">جزئیات معامله</h3>
+                <button onclick="closeTradeDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="tradeDetailsContent" class="space-y-4">
+                <!-- Content will be loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // GSAP Animation for table rows
+    gsap.from("tbody tr", {
+        duration: 0.5,
+        y: 20,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "power2.out"
+    });
+
+    function filterTrades() {
+        const accountId = document.getElementById('accountFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        
+        let url = '{% url "trades" %}?';
+        if (accountId) url += `account=${accountId}&`;
+        if (type) url += `type=${type}`;
+        
+        window.location.href = url;
+    }
+
+    function showTradeDetails(tradeId) {
+        fetch(`/trades/${tradeId}/details/`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('tradeDetailsContent').innerHTML = html;
+                document.getElementById('tradeDetailsModal').classList.remove('hidden');
+                
+                gsap.from("#tradeDetailsModal", {
+                    duration: 0.3,
+                    opacity: 0,
+                    y: 20,
+                    ease: "power2.out"
+                });
+            });
+    }
+
+    function closeTradeDetailsModal() {
+        gsap.to("#tradeDetailsModal", {
+            duration: 0.2,
+            opacity: 0,
+            y: -20,
+            ease: "power2.in",
+            onComplete: () => {
+                document.getElementById('tradeDetailsModal').classList.add('hidden');
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT5 Tracker - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tahoma&display=swap');
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar-collapsed {
+            width: 70px;
+        }
+        .sidebar-expanded {
+            width: 250px;
+        }
+        .main-content {
+            transition: margin-right 0.3s ease;
+        }
+        .content-expanded {
+            margin-right: 250px;
+        }
+        .content-collapsed {
+            margin-right: 70px;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar sidebar-expanded h-screen bg-gray-800 text-white fixed top-0 right-0 overflow-y-auto">
+            <div class="p-4 flex items-center justify-between border-b border-gray-700">
+                <h1 class="text-xl font-bold whitespace-nowrap">MT5 Tracker</h1>
+                <button id="toggleSidebar" class="text-gray-300 hover:text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="mt-4">
+                <a href="{% url 'accounts:dashboard' %}" class="flex items-center p-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition">
+                    <i class="fas fa-home ml-3"></i>
+                    <span class="sidebar-text">داشبورد</span>
+                </a>
+                <a href="{% url 'accounts:profile' %}" class="flex items-center p-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition">
+                    <i class="fas fa-user ml-3"></i>
+                    <span class="sidebar-text">پروفایل</span>
+                </a>
+                <a href="{% url 'accounts:account_list' %}" class="flex items-center p-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition">
+                    <i class="fas fa-wallet ml-3"></i>
+                    <span class="sidebar-text">حساب‌ها</span>
+                </a>
+                <a href="{% url 'trading:trade_list' %}" class="flex items-center p-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition">
+                    <i class="fas fa-exchange-alt ml-3"></i>
+                    <span class="sidebar-text">معاملات</span>
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="flex items-center p-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded transition">
+                    <i class="fas fa-sign-out-alt ml-3"></i>
+                    <span class="sidebar-text">خروج</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="main-content content-expanded w-full min-h-screen">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (sidebar.classList.contains('sidebar-expanded')) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.classList.remove('content-expanded');
+                mainContent.classList.add('content-collapsed');
+                document.querySelectorAll('.sidebar-text').forEach(el => el.style.display = 'none');
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                mainContent.classList.remove('content-collapsed');
+                mainContent.classList.add('content-expanded');
+                document.querySelectorAll('.sidebar-text').forEach(el => el.style.display = 'inline');
+            }
+        });
+
+        // GSAP Animations
+        gsap.from("#sidebar", {duration: 0.5, x: 100, opacity: 0, ease: "power2.out"});
+        gsap.from(".main-content", {duration: 0.5, opacity: 0, y: 20, ease: "power2.out", delay: 0.2});
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

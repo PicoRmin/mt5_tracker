@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}جزئیات حساب {{ account.account_id }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">حساب {{ account.account_id }}</h1>
+            <p class="text-gray-600">{{ account.broker }}</p>
+        </div>
+        <div class="flex space-x-4">
+            <a href="{% url 'trading:account_list' %}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-arrow-right ml-2"></i> بازگشت
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow">
+            <h3 class="text-lg font-medium text-gray-800 mb-4">اطلاعات حساب</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">شناسه حساب:</span>
+                    <span class="font-medium">{{ account.account_id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">بروکر:</span>
+                    <span class="font-medium">{{ account.broker }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">تاریخ ثبت:</span>
+                    <span class="font-medium">{{ account.created_at|date:"Y/m/d H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow">
+            <h3 class="text-lg font-medium text-gray-800 mb-4">آمار معاملات</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">تعداد کل معاملات:</span>
+                    <span class="font-medium">{{ account.trades.count }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">سود کل:</span>
+                    <span class="font-medium text-green-600">${{ total_profit|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-bold text-gray-800 mb-4">معاملات اخیر</h2>
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شناسه معامله</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نماد</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نوع</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">سود</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for trade in trades %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ trade.ticket_id }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.symbol }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if trade.type == 'BUY' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ trade.get_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium {% if trade.profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            ${{ trade.profit|floatformat:2 }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500">{{ trade.exit_time|date:"Y/m/d H:i" }}</div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        هیچ معامله‌ای یافت نشد
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // GSAP Animation
+    gsap.from(".bg-white", {
+        duration: 0.6,
+        y: 20,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "power2.out"
+    });
+</script>
+{% endblock %}
